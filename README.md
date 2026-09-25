@@ -32,10 +32,10 @@ Requires Python 3.10+.
 ```
 git clone https://github.com/scottkaplan41510/attribute-engine
 cd attribute-engine
-pip install -r requirements.txt
-cp .env.example .env        # add your AI_GATEWAY_API_KEY
-python src/generate_data.py # 30 sample ads with planted patterns
-python src/run.py
+pip install -e .
+cp .env.example .env                        # add your AI_GATEWAY_API_KEY
+python -m attribute_engine.generate_data    # 30 sample ads with planted patterns
+attribute-engine
 ```
 
 Your key comes from [Vercel AI Gateway](https://vercel.com/ai-gateway), which
@@ -45,14 +45,14 @@ serves both Jev and Claude. Claude models need paid credits there. You can use a
 To use your own data, pass a CSV with `copy` and `conversion_rate` columns:
 
 ```
-python src/run.py --input my_ads.csv
+attribute-engine --input my_ads.csv
 ```
 
 `--auto-approve` keeps every discovered attribute without asking.
 
 ## The sample data
 
-`src/generate_data.py` writes 30 synthetic B2B ads with two patterns planted on
+`attribute_engine.generate_data` writes 30 synthetic B2B ads with two patterns planted on
 purpose, so you know the right answer before it runs:
 
 - Solution-framed ads convert about 4 points higher. You define this attribute.
@@ -93,7 +93,7 @@ planted patterns. For real content, more is better.
 
 ## Edit it
 
-Everything configurable lives in `attributes.yaml`: the attributes, Jev's
+Everything configurable lives in `src/attribute_engine/attributes.yaml`: the attributes, Jev's
 questions and options, the discovery and generation prompts, the models, and the
 low-confidence threshold.
 
