@@ -51,8 +51,8 @@ Whether that content performs better is the next experiment.
 Requires Python 3.10+.
 
 ```
-git clone https://github.com/scottkaplan41510/attribute-engine
-cd attribute-engine
+git clone https://github.com/scottkaplan41510/attribute-engine-ad-copy
+cd attribute-engine-ad-copy
 pip install -e .
 cp .env.example .env                        # add your keys (below)
 python -m attribute_engine.generate_data    # 30 sample ads with planted patterns
