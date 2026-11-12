@@ -9,7 +9,7 @@
 
 settings:
   # Where Jev is called: openrouter (OPENROUTER_API_KEY) or vercel
-  # (AI_GATEWAY_API_KEY). Claude always goes through the Vercel key.
+  # (AI_GATEWAY_API_KEY). Claude uses ANTHROPIC_API_KEY if set, else the Vercel key.
   jev_provider: openrouter
   openrouter_model: typesafe/jev-1.13
   model: typesafe-ai/jev

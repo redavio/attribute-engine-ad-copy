@@ -1,7 +1,8 @@
 """Tag every row with its attributes.
 
 Code attributes (counts, lengths) are measured in Python. Jev attributes are
-answered by Jev through Vercel AI Gateway: one call per row, every Jev
+answered by Jev through OpenRouter or Vercel AI Gateway (jev_provider in
+attributes.yaml): one call per row, every Jev
 question in that single call. Jev returns a weight for every option, and we
 keep all of them. Nothing is dropped for low confidence; it is only flagged.
 

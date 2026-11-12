@@ -13,7 +13,8 @@ Everything else (value focus, technical level, word count, word length, CTA)
 has no effect and must come out not significant.
 
 Writes:
-    data/sample_ads.csv   copy, conversion_rate  (the engine's input)
+    data/sample_ads.csv   copy, conversion_rate  (the engine's input; a copy ships
+                          in the package as src/attribute_engine/sample_ads.csv)
     data/true_labels.csv  every ad with its true attribute labels
     data/hand_labels.csv  50 of those ads, for scoring tagging accuracy
 """

@@ -14,7 +14,7 @@ correlation, not a cause. Treat results as hypotheses to test.
 
 ## Make it yours
 
-This is a starting point, not a finished product. Go nuts with it.
+This is a starting point, not a finished product. Adapt it to your own setup.
 
 - **Any input:** pull straight from a Google Ads export, HubSpot, a database
   table, JSON, or an API. If it has text and a number, it works. Claude Code
@@ -50,8 +50,14 @@ Whether that content performs better is the next experiment.
 
 Requires Python 3.10+.
 
+Quickest: `pipx install git+https://github.com/redavio/attribute-engine-ad-copy`,
+put your keys in a `.env` file in any folder, and run `attribute-engine` there.
+It uses the 30 sample ads that ship with it.
+
+To work on the code:
+
 ```
-git clone https://github.com/scottkaplan41510/attribute-engine-ad-copy
+git clone https://github.com/redavio/attribute-engine-ad-copy
 cd attribute-engine-ad-copy
 pip install -e .
 cp .env.example .env                        # add your keys (below)
@@ -62,7 +68,10 @@ attribute-engine
 You need two keys in `.env`:
 
 - `OPENROUTER_API_KEY` from [OpenRouter](https://openrouter.ai), for Jev. About $0.0005 to label 30 rows.
-- `AI_GATEWAY_API_KEY` from [Vercel AI Gateway](https://vercel.com/ai-gateway), for Claude (discovery and new copy). Claude models need paid credits there.
+- For Claude (discovery and new copy), either `ANTHROPIC_API_KEY` from [Anthropic](https://console.anthropic.com), or `AI_GATEWAY_API_KEY` from [Vercel AI Gateway](https://vercel.com/ai-gateway) (Claude models need paid credits there).
+
+Your content goes only to those AI services: Jev's host (OpenRouter or Vercel)
+and Claude (Anthropic or Vercel). Nothing is sent to Redavio.
 
 Jev is also served by Vercel AI Gateway. Set `jev_provider: vercel` in
 `attributes.yaml` to use one key for everything. While building this, Vercel's
@@ -225,4 +234,4 @@ low-confidence threshold.
 
 ## License
 
-MIT
+MIT. See `LICENSE`.

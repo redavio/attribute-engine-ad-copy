@@ -29,4 +29,4 @@ attribute-engine-compare = "attribute_engine.compare:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-attribute_engine = ["attributes.yaml"]
+attribute_engine = ["attributes.yaml", "sample_ads.csv"]

@@ -28,6 +28,7 @@ from .tag import tag_rows
 
 ROOT = Path.cwd()  # data/, output/ and .env are read from where you run it
 CONFIG = Path(__file__).resolve().parent / "attributes.yaml"
+SAMPLE = Path(__file__).resolve().parent / "sample_ads.csv"  # bundled, so pipx installs work anywhere
 OUT = ROOT / "output"
 
 
@@ -67,17 +68,27 @@ def analyze(rows, key, config, auto_approve=True, write_copy=True, log=lambda n,
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", default=str(ROOT / "data/sample_ads.csv"))
+    # Your own data/sample_ads.csv if you have one, else the 30 sample ads that ship with the package.
+    local = ROOT / "data/sample_ads.csv"
+    parser.add_argument("--input", default=str(local if local.exists() else SAMPLE))
     parser.add_argument("--config", default=str(CONFIG))
     parser.add_argument("--auto-approve", action="store_true",
                         help="keep every discovered attribute without asking")
     args = parser.parse_args()
 
     load_dotenv(ROOT / ".env")
-    key = os.environ.get("AI_GATEWAY_API_KEY")
-    if not key:
-        sys.exit("Set AI_GATEWAY_API_KEY in .env (see .env.example).")
     config = yaml.safe_load(open(args.config))
+    key = os.environ.get("AI_GATEWAY_API_KEY")
+    missing = []
+    if not key and not os.environ.get("ANTHROPIC_API_KEY"):
+        missing.append("ANTHROPIC_API_KEY or AI_GATEWAY_API_KEY (for Claude)")
+    if config["settings"].get("jev_provider", "openrouter") == "openrouter":
+        if not os.environ.get("OPENROUTER_API_KEY"):
+            missing.append("OPENROUTER_API_KEY (for Jev)")
+    elif not key:
+        missing.append("AI_GATEWAY_API_KEY (for Jev)")
+    if missing:
+        sys.exit("Set " + " and ".join(missing) + " in .env (see .env.example).")
     rows = list(csv.DictReader(open(args.input)))
     for col in ("copy", METRIC):
         if col not in rows[0]:
