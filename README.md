@@ -28,6 +28,10 @@ This is a starting point, not a finished product. Adapt it to your own setup.
 - **Other models:** swap the model names in the same file.
 - **Fork it:** wire it into your reporting, schedule it, bolt on new steps,
   make it better. The Claude Code skills in this repo do most of the lifting.
+- **Brand the dashboard.** It ships unbranded. Set your name and logo in
+  `dashboard/src/brand.ts` and your colors at the top of `dashboard/src/style.css`.
+- **Change the screens or build your own app.** Everything on screen comes from
+  one file, `results.json`. Build your own React app, internal tool or AI agent on it.
 
 ## How it works
 
@@ -84,6 +88,23 @@ attribute-engine --input my_content.csv     # or have Claude Code point it at yo
 ```
 
 `--auto-approve` keeps every discovered attribute without asking.
+
+### See the results in the dashboard
+
+Every run also writes `output/results.json`: the scorecard plus how each row was
+labeled. A React dashboard in `dashboard/` shows it (Results, Every attribute,
+Labels). It ships with results from the 30 sample ads.
+
+```
+cd dashboard && npm install && cp ../output/results.json public/ && npm run dev
+```
+
+To rebuild `results.json` from labels you already have, with no AI calls:
+`attribute-engine-results --tags output/tags_round2.csv --config output/attributes_round2.yaml`.
+
+To share the dashboard with your team, deploy the `dashboard` folder to Vercel
+(or any static host) with your `results.json` in `public/`. Anyone can also open
+a results file with the "Open results file" button.
 
 ## Tests
 

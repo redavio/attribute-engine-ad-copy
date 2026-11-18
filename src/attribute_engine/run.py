@@ -20,6 +20,7 @@ import yaml
 from dotenv import load_dotenv
 
 from .discover import discover
+from .export import build as build_results, write as write_results_json
 from .generate import generate, write_log
 from .report import write_report
 from .stats import (METRIC, print_scorecard, run as run_stats, scorecard,
@@ -113,6 +114,10 @@ def main():
     write_report(round1, round2, found, made, len(rows), OUT / "report.md")
     card = scorecard(result["tagged_round2"], result["config_round2"])
     write_scorecard(card, OUT / "scorecard.csv")
+    base = {a["name"] for a in config["attributes"]}
+    found_names = {a["name"] for a in found["approved"]}
+    write_results_json(build_results(result["tagged_round2"], result["config_round2"],
+                                     base, found_names), OUT / "results.json")
     print("\nScorecard: each attribute value vs every other row\n")
     print_scorecard(card)
     print(f"\nDone. See {OUT / 'report.md'}")

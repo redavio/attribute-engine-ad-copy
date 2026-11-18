@@ -6,3 +6,6 @@ local/
 output/
 data/my_examples.csv
 *.egg-info/
+dashboard/node_modules/
+dashboard/dist/
+dashboard/tsconfig.tsbuildinfo
