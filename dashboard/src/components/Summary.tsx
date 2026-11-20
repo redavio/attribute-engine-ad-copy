@@ -16,7 +16,7 @@ export default function Summary({ res }: { res: Results }) {
           <div key={`${r.attribute}|${r.value}`} className="rounded-xl bg-brand/10 p-3.5">
             <div className={`text-xs ${ui.muted}`}>
               {titleOf(r.attribute)}{" "}
-              <span className="ml-1.5 rounded-full border border-zinc-300 px-1.5 py-px text-xs dark:border-zinc-600">{originOf(r.attribute)}</span>
+              <span className="ml-1.5 whitespace-nowrap rounded-full border border-zinc-300 px-1.5 py-px text-xs dark:border-zinc-600">{originOf(r.attribute)}</span>
             </div>
             <div className="my-1 text-2xl font-semibold">{label(r.value!)}</div>
             <div className="mt-0.5 text-xs">{fmt(r.mean_with!, m)} vs {fmt(r.mean_rest!, m)} for the rest</div>
