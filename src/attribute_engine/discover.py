@@ -36,8 +36,18 @@ def build_prompt(config, texts):
 
 
 def call_claude(prompt, model, api_key):
-    """Claude directly when ANTHROPIC_API_KEY is set, else via Vercel AI Gateway.
-    Returns (reply_text, input_tokens, output_tokens)."""
+    """Claude directly when ANTHROPIC_API_KEY is set, else via Vercel AI Gateway. A gpt-* or openai/*
+    model goes to OpenAI instead (OPENAI_API_KEY). Returns (reply_text, input_tokens, output_tokens)."""
+    if model.startswith(("gpt-", "openai/")):
+        r = requests.post("https://api.openai.com/v1/chat/completions", timeout=120,
+                          headers={"Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY', '')}"},
+                          json={"model": model.split("/")[-1], "max_tokens": 8000,
+                                "messages": [{"role": "user", "content": prompt}]})
+        if r.status_code != 200:
+            raise RuntimeError(f"OpenAI call failed ({r.status_code})")
+        body = r.json()
+        return (body["choices"][0]["message"]["content"], body["usage"]["prompt_tokens"],
+                body["usage"]["completion_tokens"])
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     if anthropic_key:
         r = requests.post(ANTHROPIC_URL, timeout=120, headers={
