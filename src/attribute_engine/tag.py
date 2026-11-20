@@ -113,6 +113,71 @@ def parse_answers(response, attrs, low_confidence):
     return out
 
 
+OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_INSTRUCTIONS = (
+    "You label marketing copy. For each question, judge the copy only by what it says. "
+    "Return one JSON object with one key per question: for a choice question, an object giving every "
+    "option a probability from 0 to 1 (they sum to 1); for a yes/no question, the probability (0 to 1) "
+    "that the answer is yes. Use only the option names given.")
+
+
+def _openai_prompt(text, attrs):
+    lines = []
+    for a in attrs:
+        if a["type"] == "choice":
+            opts = "; ".join(f"{k}: {v}" for k, v in a["options"].items())
+            lines.append(f'- "{a["name"]}" (choice) {a["question"]} Options: {opts}')
+        else:
+            lines.append(f'- "{a["name"]}" (yes/no) {a["question"]} Yes: {a["true"]}. No: {a["false"]}.')
+    return "Questions:\n" + "\n".join(lines) + f"\n\nCopy:\n{text}"
+
+
+def _as_jev(answer, attrs):
+    """OpenAI's JSON answer in Jev's response shape, so parse_answers works unchanged."""
+    out = {}
+    for a in attrs:
+        v = answer.get(a["name"])
+        if a["type"] == "choice":
+            raw = {k: max(float(v.get(k, 0) or 0), 0.0) for k in a["options"]} if isinstance(v, dict) else {}
+            total = sum(raw.values())
+            probs = {k: (x / total if total else 1 / len(a["options"])) for k, x in raw.items()}
+            out[a["name"]] = {"choice": max(probs, key=probs.get), "probabilities": probs}
+        else:
+            if isinstance(v, str):
+                p = 1.0 if v.strip().lower() in ("yes", "true") else 0.0
+            else:
+                p = min(max(float(v or 0), 0.0), 1.0)
+            out[a["name"]] = {"probability": p}
+    return {"answers": out}
+
+
+def call_openai(text, attrs, settings):
+    """One OpenAI call: every question for one row, JSON out. Returns (Jev-shaped response, seconds)."""
+    key = os.environ.get("OPENAI_API_KEY")
+    if not key:
+        raise RuntimeError("Set OPENAI_API_KEY in .env (see .env.example).")
+    body = {"model": settings["openai_model"], "temperature": 0, "response_format": {"type": "json_object"},
+            "messages": [{"role": "system", "content": settings.get("openai_instructions") or OPENAI_INSTRUCTIONS},
+                         {"role": "user", "content": _openai_prompt(text, attrs)}]}
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        started = time.perf_counter()
+        r = requests.post(OPENAI_URL, headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                          json=body, timeout=60)
+        if r.status_code == 200:
+            break
+        if r.status_code not in (429, 500, 502, 503) or attempt == MAX_ATTEMPTS:
+            raise RuntimeError(f"OpenAI call failed ({r.status_code})")
+        time.sleep(2 ** (attempt - 1))
+    data = r.json()
+    usage = data.get("usage", {})
+    price_in, price_out = settings.get("openai_prices") or (0.0, 0.0)
+    cost = (usage.get("prompt_tokens", 0) * price_in + usage.get("completion_tokens", 0) * price_out) / 1e6
+    response = _as_jev(json.loads(data["choices"][0]["message"]["content"]), attrs)
+    response["usage"] = {"input_tokens": usage.get("prompt_tokens", 0), "output_tokens": usage.get("completion_tokens", 0),
+                         "cost": cost}
+    return response, time.perf_counter() - started
+
+
 def jev_route(settings, api_key):
     """Where Jev calls go: OpenRouter or Vercel AI Gateway (attributes.yaml)."""
     if settings.get("jev_provider") == "openrouter":
@@ -126,13 +191,18 @@ def jev_route(settings, api_key):
 def tag_rows(rows, config, api_key):
     attrs = jev_attributes(config)
     settings = config["settings"]
-    provider, url, model, key = jev_route(settings, api_key)
-    questions = build_questions(attrs, provider)
+    if settings.get("jev_provider") == "openai":
+        def ask(text):
+            return call_openai(text, attrs, settings)
+    else:
+        provider, url, model, key = jev_route(settings, api_key)
+        questions = build_questions(attrs, provider)
+
+        def ask(text):
+            return call_jev(build_request(text, questions, model, settings.get("provider_order")), key, url)
 
     def work(row):
-        response, seconds = call_jev(
-            build_request(row["copy"], questions, model, settings.get("provider_order")),
-            key, url)
+        response, seconds = ask(row["copy"])
         cost = response.get("providerMetadata", {}).get("gateway", {})
         usage = response.get("usage", {})
         return {
